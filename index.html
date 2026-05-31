@@ -766,29 +766,57 @@
   </footer>
 
   <script>
-    function handleSubmit() {
-      const name = document.getElementById('nameInp').value.trim();
-      const phone = document.getElementById('phoneInp').value.trim();
+    const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyzXd-zSYaIOtH706hSTfWBeVmDfvdPq7AP3Wb2gcRE5oeAOAw8earWvI06-ABD3EibTg/exec';
 
-      if (!name || !phone) {
+    function handleSubmit() {
+      const ism     = document.getElementById('nameInp').value.trim();
+      const telefon = document.getElementById('phoneInp').value.trim();
+      const btn     = document.getElementById('submitBtn');
+
+      if (!ism || !telefon) {
         alert('Iltimos, ism va telefon raqamingizni kiriting.');
         return;
       }
 
-      // ✅ Meta Pixel — Lead event
-      fbq('track', 'Lead', {
-        content_name: 'Landing Page Buyurtma',
-        value: 100,
-        currency: 'USD'
-      });
-
-      const btn = document.getElementById('submitBtn');
-      btn.innerHTML = '<i class="ti ti-check"></i> Yuborildi! Tez orada bog\'lanamiz';
-      btn.style.background = 'linear-gradient(135deg, #2e7d32, #388e3c)';
+      btn.innerHTML = '<i class="ti ti-loader"></i> Yuborilmoqda...';
       btn.disabled = true;
 
-      document.getElementById('nameInp').value = '';
-      document.getElementById('phoneInp').value = '';
+      // Yashirin iframe orqali yuborish — CORS muammosi yoq
+      const iframe = document.createElement('iframe');
+      iframe.name = 'hidden_iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = SHEETS_URL;
+      form.target = 'hidden_iframe';
+
+      const f1 = document.createElement('input');
+      f1.type = 'hidden'; f1.name = 'ism'; f1.value = ism;
+      form.appendChild(f1);
+
+      const f2 = document.createElement('input');
+      f2.type = 'hidden'; f2.name = 'telefon'; f2.value = telefon;
+      form.appendChild(f2);
+
+      document.body.appendChild(form);
+
+      iframe.onload = function() {
+        fbq('track', 'Lead', {
+          content_name: 'Landing Page Buyurtma',
+          value: 100,
+          currency: 'USD'
+        });
+        btn.innerHTML = '<i class="ti ti-check"></i> Yuborildi! Tez orada boglanamiz!';
+        btn.style.background = 'linear-gradient(135deg, #2e7d32, #388e3c)';
+        btn.style.boxShadow = '0 6px 20px rgba(46,125,50,0.35)';
+        document.getElementById('nameInp').value = '';
+        document.getElementById('phoneInp').value = '';
+        setTimeout(() => { document.body.removeChild(form); document.body.removeChild(iframe); }, 2000);
+      };
+
+      form.submit();
     }
 
     // ✅ Scroll depth tracking for Pixel
